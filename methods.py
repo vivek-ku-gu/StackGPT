@@ -1,15 +1,15 @@
+from langchain_deepseek import ChatDeepSeek
 from pymongo import MongoClient
 import google.generativeai as genai
 from dotenv import load_dotenv
-from langchain.vectorstores import MongoDBAtlasVectorSearch
-from langchain.embeddings import VertexAIEmbeddings
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_groq import ChatGroq
 import os
+import json
+import uuid
 load_dotenv()
 GENAI_API_KEY = os.environ["GOOGLE_API_KEY"]
-MONGO_URI = "mongodb+srv://stackgpt:admin@cluster0.9p9ck.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-import streamlit as st
-st.title("StackGPT_POC")
-query = st.text_area("Enter your querry")
+MONGO_URI = os.environ["MONGO_URI"]
 genai.configure(api_key=GENAI_API_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 INDEX_NAME = "vector_index"
@@ -18,14 +18,11 @@ def get_gemini_embedding(text):
         model="models/text-embedding-004",content=text)
   return  embedding['embedding']
 
-
 try:
       # Establish connection
       client = MongoClient(MONGO_URI)
-
       # Access database
       db = client["StackGPT"]
-
       # Access or create collection
       collection = db.get_collection("POC")
 except Exception as e:
@@ -77,48 +74,56 @@ def store_query_embedding_in_mongodb(query, embedding):
       client.close()
       print(f"Document inserted with ID: {result.inserted_id}")
 
-def store_query_embedding_and_result_in_mongodb(query, embedding):
-    response = model.generate_content(query)
-    result = response.text
+def store_query_embedding_and_result_in_mongodb(query,res_gemini,res_llama,res_deepseek):
+    embedding = get_gemini_embedding(query)
+    thread_id = str(uuid.uuid4())
+    thread_name = "Results generated during Testing"
+
     try:
         document = {
             "embeddings": embedding,
             "query": query,
-            "result":result,
-            "hit": 0
+            "result_gemini": res_gemini,
+            "result_llama": res_llama,
+            "result_deepseek": res_deepseek,
+            "thread_name": f"{thread_name} with id {thread_id}",
+            "thread_id": thread_id
         }
         result = collection.insert_one(document)
+        saved_document = collection.find_one({"_id": result.inserted_id}, {"_id": 0})
+        return saved_document
+
     except Exception as e:
-        print("insertion failed", e)
+        print("Insertion failed", e)
+        return None
 
     finally:
-        # Close the connection
         client.close()
         print(f"Document inserted with ID: {result.inserted_id}")
-    return response.text
-def get_response_from_gemini(prompt):
+async def get_response_from_gemini(prompt):
     response= model.generate_content(prompt)
     result = response.text
     return result
+async def generate_response_Llama(prompt_input):
+    chat = ChatGroq(temperature=0, groq_api_key=os.environ["GROQ_LLAMA_API"], model_name="llama-3.3-70b-versatile")
+    system = "You are a helpful assistant."
+    human = "{text}"
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
 
-def update_hit_count(collection, query):
-  """
-  Updates the hit count of a document in the collection.
+    chain = prompt | chat
+    AI_message = chain.invoke({"text": prompt_input})
+    response = AI_message.content
+    return response
+async  def generate_response_deepseek(prompt_input):
+    chat = ChatGroq(temperature=0, groq_api_key=os.environ["GROQ_LLAMA_API"], model_name="deepseek-r1-distill-llama-70b")
+    system = "You are a helpful assistant."
+    human = "{text}"
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
 
-  Args:
-    collection: The MongoDB collection object.
-    query: The user's question.
-  """
-  try:
-    result = collection.update_one({"query": query}, {"$inc": {"hit": 1}})
-    if result.modified_count > 0:
-      print(f"Hit count updated for query: {query}")
-    else:
-      print(f"No document found for query: {query}")
-  except Exception as e:
-    print(f"Error updating hit count: {e}")
-
-
+    chain = prompt | chat
+    AI_message = chain.invoke({"text": prompt_input})
+    response = AI_message.content
+    return response
 # Update hit count (example)
 #update_hit_count("POC", query)
 # if query:

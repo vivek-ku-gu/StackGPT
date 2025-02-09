@@ -29,18 +29,57 @@
                 </a>
             </div>
         </form>
-
+        
+<!-- Add this after the form -->
         {% if prompt %}
-        <div class="card prompt-frame">
-            <strong>Prompt:</strong>
-            <div class="markdown-content">{{ prompt | safe }}</div>
-        </div>
-        {% endif %}
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="gemini">Gemini</button>
+                <button class="tab-btn" data-tab="llama">Llama</button>
+                <button class="tab-btn" data-tab="deepseek">DeepSeek</button>
+            </div>
 
-        {% if response_text %}
-        <div class="card response-frame">
-            <strong>Response:</strong>
-            <div class="markdown-content scrollable-response">{{ response_text | safe }}</div>
+            <!-- Gemini Tab Content -->
+            <div id="gemini" class="tab-content active">
+                <div class="card prompt-frame">
+                    <strong>Prompt:</strong>
+                    <div class="markdown-content">{{ prompt | safe }}</div>
+                </div>
+                {% if gemini_response %}
+                <div class="card response-frame">
+                    <strong>Response:</strong>
+                    <div class="markdown-content scrollable-response">{{ gemini_response | safe }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Llama Tab Content -->
+            <div id="llama" class="tab-content">
+                <div class="card prompt-frame">
+                    <strong>Prompt:</strong>
+                    <div class="markdown-content">{{ prompt | safe }}</div>
+                </div>
+                {% if llama_response %}
+                <div class="card response-frame">
+                    <strong>Response:</strong>
+                    <div class="markdown-content scrollable-response">{{ llama_response | safe }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- DeepSeek Tab Content -->
+            <div id="deepseek" class="tab-content">
+                <div class="card prompt-frame">
+                    <strong>Prompt:</strong>
+                    <div class="markdown-content">{{ prompt | safe }}</div>
+                </div>
+                {% if deepseek_response %}
+                <div class="card response-frame">
+                    <strong>Response:</strong>
+                    <div class="markdown-content scrollable-response">{{ deepseek_response | safe }}</div>
+                </div>
+                {% endif %}
+            </div>
         </div>
 
         <form action="/create_thread" method="post">
@@ -50,21 +89,26 @@
             </button>
         </form>
         {% endif %}
-    </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block);
+        <!-- Add this script at the end of body -->
+        <script>
+            // Tab switching functionality
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.dataset.tab;
+                    // Hide all tab contents
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.tab-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    // Show selected tab content
+                    document.getElementById(tabId).classList.add('active');
+                    button.classList.add('active');
+                });
             });
-        });
-
-        document.getElementById('promptInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                document.getElementById('promptForm').submit();
-            }
-        });
-    </script>
+        </script>
 </body>
 </html>

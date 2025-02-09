@@ -49,7 +49,8 @@ header p {
 
 textarea {
     width: 100%;
-    padding: 15px;
+    padding-bottom: 4%;
+    padding-top: 4%;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     font-size: 16px;
@@ -58,6 +59,7 @@ textarea {
     backdrop-filter: blur(5px);
     transition: all 0.3s ease-in-out;
     resize: vertical;
+    justify-content: center;
 }
 
 textarea:focus {
@@ -130,6 +132,7 @@ textarea:focus {
     border: 1px solid rgba(255, 255, 255, 0.2);
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
+    margin-top: 3%
 }
 
 /* Code Blocks */
@@ -146,7 +149,47 @@ code {
     font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
     font-size: 14px;
 }
+/* Tabs Styles */
+.tabs-container {
+    margin-top: 20px;
+}
 
+.tabs {
+    justify-content: center;
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    font-size: 0.95em;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #009ffd, #2a2a72);
+    border-bottom-color: #00ff88;
+}
+
+.tab-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.tab-content.active {
+    display: block;
+}
 /* Animations */
 @keyframes fadeIn {
     from {
